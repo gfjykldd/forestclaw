@@ -2,7 +2,7 @@
 
 #include <fc2d_cudaclaw.h>
 //#include <fclaw_base.h>  /* Needed for SC_MIN, SC_MAX */
-//#include <cassert>
+#include <cassert>
 
 #include <fc2d_cudaclaw_check.cu>
 
@@ -20,10 +20,10 @@ void geoclaw_setprob_cuda(double grav, double dry_tolerance, double sea_level)
 
 
 __device__ void rpn2_geoclaw(int idir, int meqn, int mwaves, 
-                                 int maux, double ql[], double qr[], 
-                                 double auxl[], double auxr[],
-                                 double fwave[], double s[], 
-                                 double amdq[], double apdq[])
+                             int maux, double ql[], double qr[], 
+                             double auxl[], double auxr[],
+                             double fwave[], double s[], 
+                             double amdq[], double apdq[])
 {
 #if 0
     assert(mwaves == 3);
@@ -47,19 +47,19 @@ __device__ void rpn2_geoclaw(int idir, int meqn, int mwaves,
     double hvl = ql[mv];
     double hvr = qr[mv];
 
-    double bl  = auxl[0];
-    double br  = auxr[0];
-
-    double ur = hur/hr;
-    double vr = hvr/hr;
+    double bl  = -1; //auxl[0];
+    double br  = -1; // auxr[0];
 
     double ul = hul/hl;
+    double ur = hur/hr;
+
     double vl = hvl/hl;
+    double vr = hvr/hr;
 
     /* Compute fwaves */
     {
         /* Average h at cell interface  */
-        double hbar = (hr + hl)/2;
+        double hbar = (hr + hl)/2.0;
 
 
         /* 1 wave speed of left state */
@@ -69,9 +69,11 @@ __device__ void rpn2_geoclaw(int idir, int meqn, int mwaves,
         double sr = ur + sqrt(s_grav*hr);    
 
         /* Roe speeds */
-        double uhat = (sqrt(s_grav*hl)*ul + 
-                       sqrt(s_grav*hr)*ur)/(sqrt(s_grav*hr) + sqrt(s_grav*hl));
-        double chat = sqrt(s_grav*(hr + hl))/2;
+        double uhat = (sqrt(s_grav*hl)*ul + sqrt(s_grav*hr)*ur)/
+                      (sqrt(s_grav*hl)    + sqrt(s_grav*hr));
+
+        double chat = sqrt(s_grav*hbar);
+
 
         /* Compute wave speeds by comparing speeds above */
         s[0] = min(sl, uhat - chat);
@@ -79,10 +81,10 @@ __device__ void rpn2_geoclaw(int idir, int meqn, int mwaves,
         s[1] = (s[0] + s[2])/2;
         
         /* Flux differences */
-        double fluxdiff[3];
         double phir = s_grav*hr*hr/2 + hur*hur/hr;
         double phil = s_grav*hl*hl/2 + hul*hul/hl;
 
+        double fluxdiff[3];
         fluxdiff[0] = (hr*ur) - (hl*ul);
         fluxdiff[1] = phir - phil + s_grav*hbar*(br - bl);
         fluxdiff[2] = hr*ur*vr - hl*ul*vl;
@@ -107,25 +109,28 @@ __device__ void rpn2_geoclaw(int idir, int meqn, int mwaves,
         fwave[6+mv] = beta[2]*vr;    
     }
     
+    int szm[3], szp[3];
+    for(int mw = 0; mw < mwaves; mw++)
+    {
+        int z = (int) copysign(1.,s[mw]); 
+        szm[mw] = (1-z)/2;
+        szp[mw] = (1+z)/2;        
+    }
+
     for(int mq = 0; mq < meqn; mq++)
     {
         /* z = copysign(x,y) : abs(z) = abs(x); sign(z) = sign(y) 
            if y == 0, returns abs(x) (not 0)  Should be okay here */
 
-        int z[3];
-        z[0] = (int) copysign(1.,s[0]); 
-        z[1] = (int) copysign(1.,s[1]); 
-        z[2] = (int) copysign(1.,s[2]); 
-
         /* (1-z)/2 : (-1 --> 1);  (1 --> 0) */
-        amdq[mq]  = (1-z[0])/2*fwave[mq];
-        amdq[mq] += (1-z[1])/2*fwave[meqn + mq];
-        amdq[mq] += (1-z[2])/2*fwave[2*meqn + mq];
+        amdq[mq]  = szm[0]*fwave[mq];
+        amdq[mq] += szm[1]*fwave[meqn + mq];
+        amdq[mq] += szm[2]*fwave[2*meqn + mq];
 
         /* (z+1)/2 : (-1 --> 0);  (1 --> 1)  */
-        apdq[mq]  = (z[0]+1)/2*fwave[mq];
-        apdq[mq] += (z[1]+1)/2*fwave[meqn + mq];
-        apdq[mq] += (z[2]+1)/2*fwave[2*meqn + mq];
+        apdq[mq]  = szp[0]*fwave[mq];
+        apdq[mq] += szp[1]*fwave[meqn + mq];
+        apdq[mq] += szp[2]*fwave[2*meqn + mq];
     }
 }
 
