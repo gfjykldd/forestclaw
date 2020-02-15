@@ -74,6 +74,11 @@ __device__ void rpn2_geoclaw(int idir, int meqn, int mwaves,
 
         double chat = sqrt(s_grav*hbar);
 
+#if 0
+    s(1) = MIN(ul - SQRT(grav * hl), uhat - chat)
+    s(3) = MAX(ur + SQRT(grav * hr), uhat + chat)
+    s(2) = 0.5d0 * (s(1) + s(3))
+#endif    
 
         /* Compute wave speeds by comparing speeds above */
         s[0] = min(sl, uhat - chat);
@@ -146,7 +151,7 @@ void geoclaw_assign_rpn2(cudaclaw_cuda_rpn2_t *rpn2)
     }    
 }
 
-
+#if 1
 __device__ void rpt2_geoclaw(int idir, int meqn, int mwaves, int maux,
                              double ql[], double qr[], 
                              double aux1[], double aux2[], double aux3[],
@@ -181,7 +186,7 @@ __device__ void rpt2_geoclaw(int idir, int meqn, int mwaves, int maux,
     double hls = sqrt(hl);
 
     double vhat = (vr*hrs)/(hrs + hls) + (vl*hls)/(hrs + hls);
-    double uhat = (ur*hrs)/(hrs+hls) + (ul*hls)/(hrs + hls);
+    double uhat = (ur*hrs)/(hrs + hls) + (ul*hls)/(hrs + hls);
     double hhat = (hr + hl)/2;
 
     double roe1 = vhat - sqrt(s_grav*hhat);
@@ -209,6 +214,13 @@ __device__ void rpt2_geoclaw(int idir, int meqn, int mwaves, int maux,
     beta[1] = -s2*delf1 + delf2;
     beta[2] = (delf3/(s3-s1))-(s1*delf1/(s3-s1));
 
+#if 0
+        beta(1) = (s3*delf1/(s3-s1))-(delf3/(s3-s1))
+        beta(2) = -s2*delf1 + delf2
+        beta(3) = (delf3/(s3-s1))-(s1*delf1/(s3-s1))
+#endif        
+
+
     double wave[9];
     wave[0]  = 1;
     wave[mu] = s2;
@@ -227,8 +239,8 @@ __device__ void rpt2_geoclaw(int idir, int meqn, int mwaves, int maux,
     for(int mw = 0; mw < 3; mw++)
     {
         int z = (int) copysign(1.,s[mw]);
-        szm[mw] = (1-z)/2*beta[mw];
-        szp[mw] = (1+z)/2*beta[mw];
+        szm[mw] = (1-z)/2*s[mw]*beta[mw];
+        szp[mw] = (1+z)/2*s[mw]*beta[mw];
     }
 
     for(int mq = 0; mq < meqn; mq++)
@@ -242,6 +254,7 @@ __device__ void rpt2_geoclaw(int idir, int meqn, int mwaves, int maux,
         bpasdq[mq] += szp[2]*wave[2*meqn + mq];
     }
 }
+#endif
 
 
 
@@ -303,6 +316,7 @@ __device__ void rpt2_geoclaw(int idir, int meqn, int mwaves, int maux,
         bpasdq[mq] += max(sb[1],0.)*waveb[meqn + mq];
         bpasdq[mq] += max(sb[2],0.)*waveb[2*meqn + mq];
     }
+}
 
 #endif
 
