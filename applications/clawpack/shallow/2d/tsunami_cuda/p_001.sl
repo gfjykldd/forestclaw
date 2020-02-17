@@ -28,8 +28,8 @@ module load openmpi3/3.1.4
 module load cuda/10.1
 
 mpirun tsunami \
-     --nout=200 \
-     --output=F \
+     --nout=10 \
+     --output=T \
      --user:cuda=T \
      --cudaclaw:order="2 2" \
      --cudaclaw:mthlim="4" \
