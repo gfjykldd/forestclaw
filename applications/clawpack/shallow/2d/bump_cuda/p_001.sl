@@ -28,13 +28,11 @@ module load openmpi3/3.1.4
 module load cuda/10.1
 
 mpirun bump \
-     --nout=20 --nstep=1 \
-     --output=T \
+     --output=F \
+     --nout=200 --nstep=5 \
      --user:cuda=T \
      --cudaclaw:order="2 2" \
-     --cudaclaw:mthlim="4" \
-     --clawpack46:order="2 2" \
-     --clawpack46:mthlim="4"
+     --clawpack46:order="2 2"
 
 # nvprof -o bump_prof srun --mpi=pmix_v2 bump --user:cuda=T --cudaclaw:mthlim="4" --cudaclaw:order="2 2" 
 
