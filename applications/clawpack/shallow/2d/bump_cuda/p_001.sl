@@ -28,8 +28,8 @@ module load openmpi3/3.1.4
 module load cuda/10.1
 
 mpirun bump \
-     --nout=10 --nstep=10 \
-     --output=F \
+     --nout=20 --nstep=1 \
+     --output=T \
      --user:cuda=T \
      --cudaclaw:order="2 2" \
      --cudaclaw:mthlim="4" \
