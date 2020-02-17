@@ -91,7 +91,7 @@ void bump_assign_rpn2(cudaclaw_cuda_rpn2_t *rpn2)
     cudaError_t ce = cudaMemcpyFromSymbol(rpn2, bump_rpn2, sizeof(cudaclaw_cuda_rpn2_t));
     if(ce != cudaSuccess)
     {
-        fclaw_global_essentialf("ERROR (bump_rpn2adv): %s\n",cudaGetErrorString(ce));
+        fclaw_global_essentialf("ERROR (bump_rpn2shallow): %s\n",cudaGetErrorString(ce));
         exit(0);
     }    
 }
