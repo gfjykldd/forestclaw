@@ -23,12 +23,7 @@
 module load openmpi3/3.1.4
 module load cuda/10.1
 
-mpirun bump \
-     --nout=200 --nstep=5 \
-     --output= T\
-     --user:cuda=T \
-     --cudaclaw:order="2 2" \
-     --clawpack46:order="2 2"
+mpirun bump --output= F --user:cuda=T --cudaclaw:order="2 0"
 
 # nvprof -o tsunami_prof.nvpp -e all srun --mpi=pmix_v2 tsunami 
 
