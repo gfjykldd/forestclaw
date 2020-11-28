@@ -28,17 +28,17 @@
 #include applications/clawpack/shallow/2d/bump/Makefile.am
 
 ## Conservative advection (transport) on a square
-#include applications/clawpack/transport/2d/square/Makefile.am
+include applications/clawpack/transport/2d/square/Makefile.am
 
 ## -----------------------------------------------------------
 ## Some third order examples
 ## -----------------------------------------------------------
 
 ## Burgers
-include applications/clawpack/burgers/2d/burgers_order3/Makefile.am
+# include applications/clawpack/burgers/2d/burgers_order3/Makefile.am
 
 ## Advection 
-include applications/clawpack/advection/2d/adv_order3/Makefile.am
+# include applications/clawpack/advection/2d/adv_order3/Makefile.am
 
 
 ## ---------------------------
